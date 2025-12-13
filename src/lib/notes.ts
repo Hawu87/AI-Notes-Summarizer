@@ -63,3 +63,17 @@ export async function getNotesByUser(userId: string): Promise<Note[]> {
   return data || [];
 }
 
+/**
+ * Deletes a note from the database
+ * 
+ * @param noteId - The note ID to delete
+ * @throws Error if the database operation fails
+ */
+export async function deleteNote(noteId: string): Promise<void> {
+  const { error } = await supabase.from("notes").delete().eq("id", noteId);
+
+  if (error) {
+    throw new Error(`Failed to delete note: ${error.message}`);
+  }
+}
+

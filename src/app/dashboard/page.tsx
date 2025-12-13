@@ -1,12 +1,11 @@
 // Reverted to demo-user baseline (no auth) — auth will be re-added later.
-import { getNotesByUser, createNote } from "@/lib/notes";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CreateNoteForm } from "@/components/notes/create-note-form";
-import { DashboardContainer } from "@/components/notes/dashboard-container";
+import { getNotesByUser, createNote, deleteNote } from "@/lib/notes";
+import { DashboardHeader } from "@/components/notes/dashboard-header";
+import { DashboardGridContainer } from "@/components/notes/dashboard-grid-container";
 import { revalidatePath } from "next/cache";
 
 /**
- * Formats a date string into a readable format
+ * Formats a date string into a readable format for grid view
  * Pre-computed on server to avoid passing functions to Client Components
  */
 function formatDate(dateString: string): string {
@@ -14,9 +13,7 @@ function formatDate(dateString: string): string {
   return new Intl.DateTimeFormat("en-US", {
     month: "short",
     day: "numeric",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
+    year: date.getFullYear() !== new Date().getFullYear() ? "numeric" : undefined,
   }).format(date);
 }
 
@@ -46,6 +43,22 @@ async function createNoteAction(formData: FormData) {
 }
 
 /**
+ * Server Action: Deletes a note and revalidates the dashboard
+ */
+async function deleteNoteAction(noteId: string) {
+  "use server";
+  
+  try {
+    await deleteNote(noteId);
+    revalidatePath("/dashboard");
+  } catch (error) {
+    throw new Error(
+      error instanceof Error ? error.message : "Failed to delete note"
+    );
+  }
+}
+
+/**
  * Dashboard page - displays all notes for the demo user
  * 
  * This is a Server Component that fetches notes from Supabase
@@ -62,31 +75,19 @@ export default async function DashboardPage() {
   }));
 
   return (
-    <div className="flex min-h-screen bg-zinc-50 dark:bg-black">
+    <div className="min-h-screen bg-white dark:bg-zinc-950">
       <div className="container mx-auto px-4 py-8">
-        <div className="mb-6">
-          <h1 className="text-3xl font-semibold text-black dark:text-zinc-50">
-            Dashboard
-          </h1>
-          <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
-            Your notes and summaries
-          </p>
-        </div>
+        {/* Dashboard Header */}
+        <DashboardHeader />
 
-        {/* Create Note Form */}
-        <div className="mb-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Create Note</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <CreateNoteForm createNoteAction={createNoteAction} />
-            </CardContent>
-          </Card>
+        {/* Notes Grid */}
+        <div className="mt-8">
+          <DashboardGridContainer
+            notes={notesWithFormattedDates}
+            createNoteAction={createNoteAction}
+            deleteNoteAction={deleteNoteAction}
+          />
         </div>
-
-        {/* Notes List and Viewer */}
-        <DashboardContainer notes={notesWithFormattedDates} />
       </div>
     </div>
   );

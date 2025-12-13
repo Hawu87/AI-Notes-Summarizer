@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -21,6 +22,7 @@ type Summary = {
 
 interface NoteViewerProps {
   selectedNote: Note | null;
+  onBack?: () => void;
 }
 
 /**
@@ -59,7 +61,7 @@ function formatTimestamp(timestamp: string): string {
  * Displays selected note details and handles AI summarization.
  * Handles all client-side interactivity for viewing and summarizing notes.
  */
-export function NoteViewer({ selectedNote }: NoteViewerProps) {
+export function NoteViewer({ selectedNote, onBack }: NoteViewerProps) {
   const [summary, setSummary] = useState<Summary | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingSummary, setIsLoadingSummary] = useState(false);
@@ -144,34 +146,32 @@ export function NoteViewer({ selectedNote }: NoteViewerProps) {
   }
 
   if (!selectedNote) {
-    return (
-      <Card className="h-[calc(100vh-12rem)]">
-        <CardHeader>
-          <CardTitle>Note Details</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex h-full items-center justify-center">
-            <p className="text-muted-foreground text-sm">
-              Select a note to view
-            </p>
-          </div>
-        </CardContent>
-      </Card>
-    );
+    return null;
   }
 
   return (
-    <Card className="h-[calc(100vh-12rem)]">
-      <CardHeader>
-        <CardTitle>{selectedNote.title}</CardTitle>
+    <Card className="h-[calc(100vh-12rem)] border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
+      <CardHeader className="border-b border-zinc-200 dark:border-zinc-800">
+        {onBack && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onBack}
+            className="mb-2 -ml-2 text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200"
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back
+          </Button>
+        )}
+        <CardTitle className="text-zinc-900 dark:text-zinc-50">{selectedNote.title}</CardTitle>
       </CardHeader>
       <CardContent className="flex h-full flex-col gap-4 overflow-y-auto">
         {/* Note Content */}
         <div>
-          <h3 className="mb-2 text-sm font-medium text-zinc-600 dark:text-zinc-400">
+          <h3 className="mb-2 text-sm font-medium text-zinc-700 dark:text-zinc-400">
             Content
           </h3>
-          <p className="whitespace-pre-wrap text-sm text-zinc-700 dark:text-zinc-300">
+          <p className="whitespace-pre-wrap text-sm text-zinc-900 dark:text-zinc-300">
             {selectedNote.content}
           </p>
         </div>
@@ -180,7 +180,7 @@ export function NoteViewer({ selectedNote }: NoteViewerProps) {
 
         {/* Summary Status */}
         {summary && !isLoadingSummary && (
-          <div className="flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">
+          <div className="flex items-center gap-2 text-xs text-zinc-600 dark:text-zinc-400">
             <span className="font-medium">Summarized</span>
             <span>•</span>
             <span>
@@ -233,7 +233,7 @@ export function NoteViewer({ selectedNote }: NoteViewerProps) {
                     : "Summarize with AI"}
               </Button>
               {summary && !isLoading && (
-                <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                <p className="text-xs text-zinc-600 dark:text-zinc-400">
                   This will overwrite the existing summary.
                 </p>
               )}
@@ -278,19 +278,19 @@ export function NoteViewer({ selectedNote }: NoteViewerProps) {
             <Separator />
             <div className="space-y-4">
               <div>
-                <h3 className="mb-2 text-sm font-medium text-zinc-600 dark:text-zinc-400">
+                <h3 className="mb-2 text-sm font-medium text-zinc-700 dark:text-zinc-400">
                   Summary
                 </h3>
-                <p className="text-sm text-zinc-700 dark:text-zinc-300">
+                <p className="text-sm text-zinc-900 dark:text-zinc-300">
                   {summary.summary}
                 </p>
               </div>
 
               <div>
-                <h3 className="mb-2 text-sm font-medium text-zinc-600 dark:text-zinc-400">
+                <h3 className="mb-2 text-sm font-medium text-zinc-700 dark:text-zinc-400">
                   Key Points
                 </h3>
-                <ul className="list-disc space-y-1 pl-5 text-sm text-zinc-700 dark:text-zinc-300">
+                <ul className="list-disc space-y-1 pl-5 text-sm text-zinc-900 dark:text-zinc-300">
                   {summary.bullets.map((bullet, index) => (
                     <li key={index}>{bullet}</li>
                   ))}
