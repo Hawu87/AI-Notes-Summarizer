@@ -16,15 +16,17 @@ export default function SignUpPage() {
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setIsLoading(true);
     setError(null);
+    setSuccess(false);
 
     try {
       const supabase = createClient();
-      const { error: signUpError } = await supabase.auth.signUp({
+      const { data, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
       });
@@ -33,6 +35,16 @@ export default function SignUpPage() {
         throw signUpError;
       }
 
+      // Check if email confirmation is required
+      // If user exists but no session, email confirmation is enabled
+      if (data.user && !data.session) {
+        // Email confirmation required
+        setError(null);
+        setSuccess(true);
+        return;
+      }
+
+      // If session exists, user is automatically signed in
       router.push("/dashboard");
       router.refresh();
     } catch (err) {
@@ -92,8 +104,14 @@ export default function SignUpPage() {
               </div>
             )}
 
-            <Button type="submit" disabled={isLoading} className="w-full">
-              {isLoading ? "Signing up..." : "Sign Up"}
+            {success && (
+              <div className="rounded-md bg-green-500/10 p-3 text-sm text-green-600 dark:text-green-400">
+                Please check your email to confirm your account before signing in.
+              </div>
+            )}
+
+            <Button type="submit" disabled={isLoading || success} className="w-full">
+              {isLoading ? "Signing up..." : success ? "Check your email" : "Sign Up"}
             </Button>
 
             <p className="text-center text-sm text-zinc-600 dark:text-zinc-400">

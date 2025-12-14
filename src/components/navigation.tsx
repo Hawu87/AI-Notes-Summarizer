@@ -30,6 +30,12 @@ export function Navigation() {
               <span className="hidden md:inline">GitHub</span>
             </Link>
           </Button>
+          <Button variant="outline" size="sm" asChild>
+            <Link href="/login">Login</Link>
+          </Button>
+          <Button variant="outline" size="sm" asChild>
+            <Link href="/signup">Sign Up</Link>
+          </Button>
           <Button size="sm" asChild>
             <Link href="/dashboard">Dashboard</Link>
           </Button>

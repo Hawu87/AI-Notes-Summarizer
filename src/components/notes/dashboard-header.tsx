@@ -1,7 +1,8 @@
 "use client";
 
-import { Settings, LayoutGrid, User } from "lucide-react";
+import { Settings, LayoutGrid } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { SessionIndicator } from "@/components/auth/session-indicator";
 
 /**
  * Dashboard header component
@@ -25,10 +26,8 @@ export function DashboardHeader() {
           <LayoutGrid className="h-5 w-5" />
         </Button>
 
-        {/* User avatar placeholder */}
-        <div className="ml-2 flex h-8 w-8 items-center justify-center rounded-full bg-zinc-200 dark:bg-zinc-800">
-          <User className="h-4 w-4 text-zinc-600 dark:text-zinc-400" />
-        </div>
+        {/* Auth status */}
+        <SessionIndicator />
       </div>
     </div>
   );
