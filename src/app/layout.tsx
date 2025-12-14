@@ -3,6 +3,15 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { SyncSession } from "@/components/auth/sync-session";
+import { getSiteUrl } from "@/lib/site-url";
+
+// Runtime guard: Warn if NEXT_PUBLIC_SITE_URL is missing in production
+if (process.env.NODE_ENV === "production" && !process.env.NEXT_PUBLIC_SITE_URL) {
+  console.warn(
+    "⚠️  NEXT_PUBLIC_SITE_URL is not set. Using fallback:",
+    process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000"
+  );
+}
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
