@@ -9,6 +9,7 @@ interface HeroGeometricProps {
   title2?: string;
   description?: string;
   className?: string;
+  children?: React.ReactNode;
 }
 
 export function HeroGeometric({
@@ -17,6 +18,7 @@ export function HeroGeometric({
   title2 = "into clear summaries",
   description = "Paste long text and get a clean summary + bullet points in seconds.",
   className,
+  children,
 }: HeroGeometricProps) {
   return (
     <div
@@ -117,6 +119,18 @@ export function HeroGeometric({
           >
             {description}
           </motion.p>
+        )}
+
+        {/* CTA Buttons */}
+        {children && (
+          <motion.div
+            className="mt-8 flex flex-col items-center gap-4 sm:flex-row sm:justify-center"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.3 }}
+          >
+            {children}
+          </motion.div>
         )}
       </div>
     </div>

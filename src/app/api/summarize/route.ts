@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { openai } from "@/lib/openai";
 import { upsertSummary } from "@/lib/summaries";
+import { createServerClient } from "@/lib/supabase/server";
 
 /**
  * POST /api/summarize
@@ -19,6 +20,20 @@ import { upsertSummary } from "@/lib/summaries";
  */
 export async function POST(request: NextRequest) {
   try {
+    // Check authentication
+    const supabase = await createServerClient();
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
+
+    if (userError || !user) {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+
     // Parse and validate request body
     const body = await request.json();
     const { noteId, content } = body;
@@ -34,6 +49,27 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: "Invalid or missing content" },
         { status: 400 }
+      );
+    }
+
+    // Verify note ownership (RLS will enforce this, but we check explicitly for better error messages)
+    const { data: note, error: noteError } = await supabase
+      .from("notes")
+      .select("id, user_id")
+      .eq("id", noteId)
+      .single();
+
+    if (noteError || !note) {
+      return NextResponse.json(
+        { error: "Note not found" },
+        { status: 404 }
+      );
+    }
+
+    if (note.user_id !== user.id) {
+      return NextResponse.json(
+        { error: "Forbidden: You can only summarize your own notes" },
+        { status: 403 }
       );
     }
 

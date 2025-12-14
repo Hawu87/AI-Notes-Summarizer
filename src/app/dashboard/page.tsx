@@ -1,5 +1,6 @@
-// Reverted to demo-user baseline (no auth) — auth will be re-added later.
+import { redirect } from "next/navigation";
 import { getNotesByUser, createNote, deleteNote } from "@/lib/notes";
+import { getServerUser } from "@/lib/supabase/server";
 import { DashboardHeader } from "@/components/notes/dashboard-header";
 import { DashboardGridContainer } from "@/components/notes/dashboard-grid-container";
 import { revalidatePath } from "next/cache";
@@ -23,7 +24,6 @@ function formatDate(dateString: string): string {
 async function createNoteAction(formData: FormData) {
   "use server";
   
-  const userId = "demo-user";
   const title = formData.get("title") as string;
   const content = formData.get("content") as string;
 
@@ -32,7 +32,7 @@ async function createNoteAction(formData: FormData) {
   }
 
   try {
-    await createNote(userId, title.trim(), content.trim());
+    await createNote(title.trim(), content.trim());
     revalidatePath("/dashboard");
     return { success: true };
   } catch (error) {
@@ -59,14 +59,21 @@ async function deleteNoteAction(noteId: string) {
 }
 
 /**
- * Dashboard page - displays all notes for the demo user
+ * Dashboard page - displays all notes for the authenticated user
  * 
- * This is a Server Component that fetches notes from Supabase
- * and renders them in a 2-column grid layout.
+ * This is a Server Component that fetches notes from Supabase.
+ * RLS ensures users only see their own notes.
  */
 export default async function DashboardPage() {
-  const userId = "demo-user";
-  const notes = await getNotesByUser(userId);
+  // Check if user is authenticated
+  const userId = await getServerUser();
+  
+  if (!userId) {
+    redirect("/login");
+  }
+
+  // Fetch notes (RLS will automatically filter to user's notes)
+  const notes = await getNotesByUser();
 
   // Pre-format dates on server to avoid passing functions to Client Components
   const notesWithFormattedDates = notes.map((note) => ({

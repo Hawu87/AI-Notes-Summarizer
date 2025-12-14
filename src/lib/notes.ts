@@ -1,4 +1,4 @@
-import { supabase } from "./supabase";
+import { createServerClient } from "./supabase/server";
 
 /**
  * Note type matching the Supabase schema
@@ -12,23 +12,34 @@ export type Note = {
 };
 
 /**
- * Creates a new note in the database
+ * Creates a new note in the database for the authenticated user
  * 
- * @param userId - The user ID (placeholder string until auth is implemented)
  * @param title - The note title
  * @param content - The note content/body
  * @returns The created note object, or null if creation failed
- * @throws Error if the database operation fails
+ * @throws Error if the database operation fails or user is not authenticated
  */
 export async function createNote(
-  userId: string,
   title: string,
   content: string
 ): Promise<Note | null> {
+  const supabase = await createServerClient();
+  
+  // Get the authenticated user
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+
+  if (userError || !user) {
+    throw new Error("User not authenticated");
+  }
+
+  // RLS will automatically enforce that user_id = auth.uid()
   const { data, error } = await supabase
     .from("notes")
     .insert({
-      user_id: userId,
+      user_id: user.id,
       title,
       content,
     })
@@ -43,17 +54,28 @@ export async function createNote(
 }
 
 /**
- * Fetches all notes for a given user, ordered by creation date (newest first)
+ * Fetches all notes for the authenticated user, ordered by creation date (newest first)
  * 
- * @param userId - The user ID to fetch notes for
- * @returns Array of notes for the user, or empty array if none found
- * @throws Error if the database operation fails
+ * @returns Array of notes for the authenticated user, or empty array if none found
+ * @throws Error if the database operation fails or user is not authenticated
  */
-export async function getNotesByUser(userId: string): Promise<Note[]> {
+export async function getNotesByUser(): Promise<Note[]> {
+  const supabase = await createServerClient();
+  
+  // Get the authenticated user
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+
+  if (userError || !user) {
+    throw new Error("User not authenticated");
+  }
+
+  // RLS will automatically filter to only the user's notes
   const { data, error } = await supabase
     .from("notes")
     .select("*")
-    .eq("user_id", userId)
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -65,11 +87,25 @@ export async function getNotesByUser(userId: string): Promise<Note[]> {
 
 /**
  * Deletes a note from the database
+ * RLS ensures users can only delete their own notes
  * 
  * @param noteId - The note ID to delete
- * @throws Error if the database operation fails
+ * @throws Error if the database operation fails or user is not authenticated
  */
 export async function deleteNote(noteId: string): Promise<void> {
+  const supabase = await createServerClient();
+  
+  // Get the authenticated user
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+
+  if (userError || !user) {
+    throw new Error("User not authenticated");
+  }
+
+  // RLS will automatically enforce that only the owner can delete
   const { error } = await supabase.from("notes").delete().eq("id", noteId);
 
   if (error) {

@@ -1,4 +1,4 @@
-import { supabase } from "./supabase";
+import { createServerClient } from "./supabase/server";
 
 /**
  * Summary type matching the Supabase schema
@@ -20,6 +20,7 @@ export type Summary = {
  * @throws Error if the database operation fails
  */
 export async function getSummaryByNoteId(noteId: string): Promise<Summary | null> {
+  const supabase = await createServerClient();
   const { data, error } = await supabase
     .from("summaries")
     .select("*")
@@ -72,6 +73,8 @@ export async function upsertSummary(
   let data;
   let error;
 
+  const supabase = await createServerClient();
+  
   if (existingSummary) {
     // Update existing summary
     const { data: updateData, error: updateError } = await supabase

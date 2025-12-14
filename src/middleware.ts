@@ -1,8 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 /**
- * Middleware disabled - reverted to demo-user baseline (no auth)
- * Auth will be re-added later.
+ * Middleware - currently a no-op pass-through
+ * Route protection is handled at the page level (e.g., dashboard redirects to /login if not authenticated)
  */
 export async function middleware(request: NextRequest) {
   // No-op: just pass through all requests without auth checks
