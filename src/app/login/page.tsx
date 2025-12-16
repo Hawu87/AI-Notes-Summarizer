@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,7 +10,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
  * Login page - email/password authentication
  */
 export default function LoginPage() {
-  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -19,12 +17,18 @@ export default function LoginPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    
+    // Prevent duplicate submissions
+    if (isLoading) {
+      return;
+    }
+    
     setIsLoading(true);
     setError(null);
 
     try {
       const supabase = createClient();
-      const { error: signInError } = await supabase.auth.signInWithPassword({
+      const { data, error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
@@ -33,13 +37,24 @@ export default function LoginPage() {
         throw signInError;
       }
 
-      router.push("/dashboard");
-      router.refresh();
+      // Verify session exists before proceeding
+      if (!data.session) {
+        throw new Error("No session returned from sign in");
+      }
+
+      // Immediately set cookie for server-side access
+      // This ensures the dashboard server component can authenticate
+      document.cookie = `sb-session=${JSON.stringify({
+        access_token: data.session.access_token,
+        refresh_token: data.session.refresh_token,
+      })}; path=/; max-age=${data.session.expires_in || 3600}; SameSite=Lax`;
+
+      // Use window.location.href for full page reload to ensure cookies are sent
+      window.location.href = "/dashboard";
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Failed to sign in"
       );
-    } finally {
       setIsLoading(false);
     }
   }
