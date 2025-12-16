@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { getSiteUrl } from "@/lib/site-url";
+import { getAuthRedirectUrl } from "@/lib/site-url";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,18 +21,24 @@ export default function SignUpPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+
+    // Prevent duplicate submissions
+    if (isLoading) {
+      return;
+    }
+
     setIsLoading(true);
     setError(null);
     setSuccess(false);
 
     try {
       const supabase = createClient();
-      const siteUrl = getSiteUrl();
+      const authRedirectUrl = getAuthRedirectUrl();
       const { data, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          emailRedirectTo: `${siteUrl}/auth/callback`,
+          emailRedirectTo: authRedirectUrl,
         },
       });
 
@@ -49,14 +55,14 @@ export default function SignUpPage() {
         return;
       }
 
-      // If session exists, user is automatically signed in
+      // If session exists (email confirmation disabled), user is automatically signed in
+      // This should not happen in production with email confirmation enabled
       router.push("/dashboard");
       router.refresh();
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Failed to sign up"
       );
-    } finally {
       setIsLoading(false);
     }
   }
@@ -111,7 +117,7 @@ export default function SignUpPage() {
 
             {success && (
               <div className="rounded-md bg-green-500/10 p-3 text-sm text-green-600 dark:text-green-400">
-                Please check your email to confirm your account before signing in.
+                Check your email to verify your account
               </div>
             )}
 

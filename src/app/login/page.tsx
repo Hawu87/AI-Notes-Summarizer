@@ -1,15 +1,56 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 /**
- * Login page - email/password authentication
+ * Checks if user is already authenticated and redirects to dashboard if so
+ * Also handles email verification code exchange if code is present in URL
  */
-export default function LoginPage() {
+function HandleVerificationCode() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const code = searchParams.get("code");
+
+  useEffect(() => {
+    async function checkAuth() {
+      const supabase = createClient();
+
+      // If code is present, exchange it for a session
+      if (code) {
+        const { error } = await supabase.auth.exchangeCodeForSession(code);
+        if (error) {
+          console.error("Verification error:", error);
+          // Stay on login page if code exchange fails
+          return;
+        }
+        // Code exchanged successfully, user is now authenticated
+      }
+
+      // Check if user is already authenticated (either from code exchange or existing session)
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        // User is authenticated, redirect to dashboard
+        window.location.href = "/dashboard";
+      }
+    }
+
+    checkAuth();
+  }, [code, router]);
+
+  return null;
+}
+
+/**
+ * Login page - email/password authentication
+ * Also handles email verification code exchange if code is present in URL
+ */
+function LoginPageContent() {
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -120,6 +161,26 @@ export default function LoginPage() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-screen items-center justify-center bg-zinc-50 dark:bg-black">
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <CardTitle>Sign In</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-center text-zinc-600 dark:text-zinc-400">Loading...</div>
+          </CardContent>
+        </Card>
+      </div>
+    }>
+      <HandleVerificationCode />
+      <LoginPageContent />
+    </Suspense>
   );
 }
 

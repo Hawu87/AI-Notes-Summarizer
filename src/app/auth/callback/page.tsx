@@ -15,7 +15,6 @@ function AuthCallbackContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const code = searchParams.get("code");
-  const next = searchParams.get("next") || "/dashboard";
 
   useEffect(() => {
     async function handleCallback() {
@@ -37,13 +36,14 @@ function AuthCallbackContent() {
         return;
       }
 
-      // Successfully authenticated, redirect to dashboard
-      router.push(next);
+      // Successfully authenticated, always redirect to login page
+      // User will sign in on the login page after email verification
+      router.push("/login");
       router.refresh();
     }
 
     handleCallback();
-  }, [code, next, router]);
+  }, [code, router]);
 
   return (
     <div className="flex min-h-screen items-center justify-center">
