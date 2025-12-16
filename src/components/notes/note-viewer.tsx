@@ -5,6 +5,7 @@ import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { cn } from "@/lib/utils";
 
 type Note = {
   id: string;
@@ -67,6 +68,7 @@ export function NoteViewer({ selectedNote, onBack }: NoteViewerProps) {
   const [isLoadingSummary, setIsLoadingSummary] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [isContentExpanded, setIsContentExpanded] = useState(false);
 
   // Load saved summary when a note is selected
   useEffect(() => {
@@ -149,9 +151,15 @@ export function NoteViewer({ selectedNote, onBack }: NoteViewerProps) {
     return null;
   }
 
+  // Check if content is long (more than ~16 lines)
+  const contentLines = selectedNote.content.split('\n').length;
+  const isLongContent = contentLines > 16 || selectedNote.content.length > 800;
+  const shouldShowToggle = isLongContent;
+
   return (
-    <Card className="h-[calc(100vh-12rem)] border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
-      <CardHeader className="border-b border-zinc-200 dark:border-zinc-800">
+    <Card className="flex max-h-[85vh] flex-col border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
+      {/* Sticky Header */}
+      <CardHeader className="flex-shrink-0 border-b border-zinc-200 dark:border-zinc-800">
         {onBack && (
           <Button
             variant="ghost"
@@ -163,24 +171,14 @@ export function NoteViewer({ selectedNote, onBack }: NoteViewerProps) {
             Back
           </Button>
         )}
-        <CardTitle className="text-zinc-900 dark:text-zinc-50">{selectedNote.title}</CardTitle>
+        <CardTitle className="break-words text-zinc-900 dark:text-zinc-50">{selectedNote.title}</CardTitle>
       </CardHeader>
-      <CardContent className="flex h-full flex-col gap-4 overflow-y-auto">
-        {/* Note Content */}
-        <div>
-          <h3 className="mb-2 text-sm font-medium text-zinc-700 dark:text-zinc-400">
-            Content
-          </h3>
-          <p className="whitespace-pre-wrap text-sm text-zinc-900 dark:text-zinc-300">
-            {selectedNote.content}
-          </p>
-        </div>
 
-        <Separator />
-
+      {/* Sticky Actions Section */}
+      <div className="flex-shrink-0 border-b border-zinc-200 bg-white px-4 py-4 dark:border-zinc-800 dark:bg-zinc-900 sm:px-6">
         {/* Summary Status */}
         {summary && !isLoadingSummary && (
-          <div className="flex items-center gap-2 text-xs text-zinc-600 dark:text-zinc-400">
+          <div className="mb-4 flex items-center gap-2 text-xs text-zinc-600 dark:text-zinc-400">
             <span className="font-medium">Summarized</span>
             <span>•</span>
             <span>
@@ -243,10 +241,38 @@ export function NoteViewer({ selectedNote, onBack }: NoteViewerProps) {
 
         {/* Error Message */}
         {error && (
-          <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+          <div className="mt-4 rounded-md bg-destructive/10 p-3 text-sm text-destructive">
             {error}
           </div>
         )}
+      </div>
+
+      {/* Scrollable Content Area */}
+      <CardContent className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-4 sm:p-6">
+        {/* Note Content */}
+        <div>
+          <h3 className="mb-2 text-sm font-medium text-zinc-700 dark:text-zinc-400">
+            Content
+          </h3>
+          <div className="relative">
+            <p
+              className={cn(
+                "whitespace-pre-wrap break-words text-sm text-zinc-900 dark:text-zinc-300",
+                shouldShowToggle && !isContentExpanded && "line-clamp-[16]"
+              )}
+            >
+              {selectedNote.content}
+            </p>
+            {shouldShowToggle && (
+              <button
+                onClick={() => setIsContentExpanded(!isContentExpanded)}
+                className="mt-2 text-sm font-medium text-primary hover:underline"
+              >
+                {isContentExpanded ? "Show less" : "Show more"}
+              </button>
+            )}
+          </div>
+        </div>
 
         {/* Loading Skeleton */}
         {isLoadingSummary && !summary && (
@@ -281,7 +307,7 @@ export function NoteViewer({ selectedNote, onBack }: NoteViewerProps) {
                 <h3 className="mb-2 text-sm font-medium text-zinc-700 dark:text-zinc-400">
                   Summary
                 </h3>
-                <p className="text-sm text-zinc-900 dark:text-zinc-300">
+                <p className="break-words text-sm text-zinc-900 dark:text-zinc-300">
                   {summary.summary}
                 </p>
               </div>
@@ -290,9 +316,9 @@ export function NoteViewer({ selectedNote, onBack }: NoteViewerProps) {
                 <h3 className="mb-2 text-sm font-medium text-zinc-700 dark:text-zinc-400">
                   Key Points
                 </h3>
-                <ul className="list-disc space-y-1 pl-5 text-sm text-zinc-900 dark:text-zinc-300">
+                <ul className="list-disc space-y-1 break-words pl-5 text-sm text-zinc-900 dark:text-zinc-300">
                   {summary.bullets.map((bullet, index) => (
-                    <li key={index}>{bullet}</li>
+                    <li key={index} className="break-words">{bullet}</li>
                   ))}
                 </ul>
               </div>

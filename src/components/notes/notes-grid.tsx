@@ -106,7 +106,7 @@ export function NotesGrid({
           </div>
 
           {/* Title (truncate to 2 lines) */}
-          <h3 className="mb-auto line-clamp-2 text-sm font-semibold text-zinc-900 dark:text-zinc-50">
+          <h3 className="mb-auto line-clamp-2 break-words text-sm font-semibold text-zinc-900 dark:text-zinc-50">
             {note.title}
           </h3>
 
