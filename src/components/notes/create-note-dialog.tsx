@@ -59,8 +59,9 @@ export function CreateNoteDialog({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <Card className="w-full max-w-md border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
-        <CardHeader className="flex flex-row items-center justify-between border-b border-zinc-200 dark:border-zinc-800">
+      <Card className="flex max-h-[80vh] w-full max-w-md flex-col border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
+        {/* Sticky Header */}
+        <CardHeader className="flex flex-shrink-0 flex-row items-center justify-between border-b border-zinc-200 dark:border-zinc-800">
           <CardTitle className="text-zinc-900 dark:text-zinc-50">Create Note</CardTitle>
           <Button
             variant="ghost"
@@ -71,62 +72,72 @@ export function CreateNoteDialog({
             <X className="h-4 w-4" />
           </Button>
         </CardHeader>
-        <CardContent className="pt-6">
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label htmlFor="title" className="mb-2 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                Title
-              </label>
-              <Input
-                id="title"
-                name="title"
-                type="text"
-                placeholder="Enter note title"
-                required
-                disabled={isPending}
-                className="border-zinc-300 bg-white text-zinc-900 placeholder:text-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-50"
-              />
+
+        {/* Scrollable Form Content */}
+        <CardContent className="flex min-h-0 flex-1 flex-col overflow-hidden pt-6">
+          <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
+            {/* Scrollable content area */}
+            <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto pr-1">
+              <div>
+                <label htmlFor="title" className="mb-2 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                  Title
+                </label>
+                <Input
+                  id="title"
+                  name="title"
+                  type="text"
+                  placeholder="Enter note title"
+                  required
+                  disabled={isPending}
+                  className="border-zinc-300 bg-white text-zinc-900 placeholder:text-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-50"
+                />
+              </div>
+
+              <div className="flex min-h-0 flex-1 flex-col">
+                <label htmlFor="content" className="mb-2 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                  Content
+                </label>
+                <div className="min-h-0 flex-1">
+                  <Textarea
+                    id="content"
+                    name="content"
+                    placeholder="Enter note content"
+                    required
+                    disabled={isPending}
+                    className="h-full min-h-[120px] w-full resize-none border-zinc-300 bg-white text-zinc-900 placeholder:text-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-50"
+                  />
+                </div>
+              </div>
+
+              {error && (
+                <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+                  {error}
+                </div>
+              )}
+
+              {success && (
+                <div className="rounded-md bg-green-500/10 p-3 text-sm text-green-400">
+                  Note created successfully!
+                </div>
+              )}
             </div>
 
-            <div>
-              <label htmlFor="content" className="mb-2 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                Content
-              </label>
-              <Textarea
-                id="content"
-                name="content"
-                placeholder="Enter note content"
-                required
-                disabled={isPending}
-                className="min-h-[120px] border-zinc-300 bg-white text-zinc-900 placeholder:text-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-50"
-              />
-            </div>
-
-            {error && (
-              <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
-                {error}
+            {/* Sticky Footer Buttons */}
+            <div className="flex-shrink-0 border-t border-zinc-200 pt-4 dark:border-zinc-800">
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => onOpenChange(false)}
+                  disabled={isPending}
+                  className="flex-1 border-zinc-300 text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                >
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={isPending} className="flex-1">
+                  {isPending ? "Saving..." : "Create Note"}
+                </Button>
               </div>
-            )}
-
-            {success && (
-              <div className="rounded-md bg-green-500/10 p-3 text-sm text-green-400">
-                Note created successfully!
-              </div>
-            )}
-
-            <div className="flex gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => onOpenChange(false)}
-                disabled={isPending}
-                className="flex-1 border-zinc-300 text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
-              >
-                Cancel
-              </Button>
-              <Button type="submit" disabled={isPending} className="flex-1">
-                {isPending ? "Saving..." : "Create Note"}
-              </Button>
             </div>
           </form>
         </CardContent>
