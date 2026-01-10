@@ -33,17 +33,62 @@ export default function SignUpPage() {
 
     try {
       const supabase = createClient();
-      const authRedirectUrl = getAuthRedirectUrl();
+      
+      // Try to get auth redirect URL, but don't fail signup if it's missing
+      // We'll only use it if signup succeeds
+      let authRedirectUrl: string | null = null;
+      try {
+        authRedirectUrl = getAuthRedirectUrl();
+      } catch (redirectError) {
+        // If redirect URL can't be generated, we'll still attempt signup
+        // but won't include the redirect option
+        console.warn("Auth redirect URL not available:", redirectError);
+      }
+
+      // Attempt signup - handle existing user errors gracefully
       const { data, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
-        options: {
+        options: authRedirectUrl ? {
           emailRedirectTo: authRedirectUrl,
-        },
+        } : undefined,
       });
 
+      // Handle signup errors - check for existing user specifically
       if (signUpError) {
-        throw signUpError;
+        // Check if error indicates user already exists
+        // Supabase returns various messages/codes for existing users:
+        // - "User already registered"
+        // - "A user with this email address has already been registered"
+        // - "email_address_not_authorized" (when email is already in use)
+        // - Error status codes related to duplicate users
+        const errorMessage = (signUpError.message || "").toLowerCase();
+        const errorCode = (signUpError.status || "").toString().toLowerCase();
+        
+        // Detect existing user errors
+        const isExistingUserError = 
+          errorMessage.includes("already registered") ||
+          errorMessage.includes("already exists") ||
+          errorMessage.includes("email address has already been registered") ||
+          errorMessage.includes("user with this email") ||
+          errorCode.includes("user_already_registered") ||
+          errorCode.includes("email_address_not_authorized");
+        
+        if (isExistingUserError) {
+          setError("An account with this email already exists. Try logging in instead.");
+          setIsLoading(false);
+          return;
+        }
+        
+        // For other errors, show the actual error message (but filter out env var errors)
+        const displayMessage = signUpError.message || "Failed to sign up";
+        if (displayMessage.includes("NEXT_PUBLIC_SITE_URL") || displayMessage.includes("environment variable")) {
+          setError("Unable to complete signup. Please try again later.");
+        } else {
+          setError(displayMessage);
+        }
+        setIsLoading(false);
+        return;
       }
 
       // Check if email confirmation is required
@@ -60,9 +105,16 @@ export default function SignUpPage() {
       router.push("/dashboard");
       router.refresh();
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Failed to sign up"
-      );
+      // Handle any other errors that might occur
+      // Filter out environment variable errors - these shouldn't be shown to users
+      const errorMessage = err instanceof Error ? err.message : "Failed to sign up";
+      
+      // Don't show technical environment variable errors to users
+      if (errorMessage.includes("NEXT_PUBLIC_SITE_URL") || errorMessage.includes("environment variable")) {
+        setError("Unable to complete signup. Please try again later.");
+      } else {
+        setError(errorMessage);
+      }
       setIsLoading(false);
     }
   }
