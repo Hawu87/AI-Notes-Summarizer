@@ -3,6 +3,12 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 
+// Type for clickable trigger elements that can accept onClick
+type ClickableTrigger = React.ReactElement<{
+  onClick?: (e: React.MouseEvent<HTMLElement>) => void;
+  [key: string]: unknown;
+}>;
+
 interface DropdownMenuProps {
   children: React.ReactNode;
   trigger: React.ReactNode;
@@ -38,20 +44,23 @@ export function DropdownMenu({ children, trigger, className }: DropdownMenuProps
     };
   }, [open]);
 
-  // Clone trigger to add onClick handler
+  // Clone trigger to add onClick handler with proper type narrowing
   const triggerWithHandler = React.isValidElement(trigger)
-    ? React.cloneElement(trigger as React.ReactElement, {
-        onClick: (e: React.MouseEvent) => {
-          // Call original onClick if it exists
-          const originalOnClick = (trigger as React.ReactElement).props.onClick;
-          if (originalOnClick) {
-            originalOnClick(e);
-          }
-          handleToggle(e);
-        },
-        "aria-expanded": open,
-        "aria-haspopup": "menu",
-      })
+    ? (() => {
+        const clickableTrigger = trigger as ClickableTrigger;
+        const originalOnClick = clickableTrigger.props.onClick;
+        
+        return React.cloneElement(clickableTrigger, {
+          onClick: (e: React.MouseEvent<HTMLElement>) => {
+            // Call original onClick if it exists
+            originalOnClick?.(e);
+            // Then handle toggle
+            handleToggle(e);
+          },
+          "aria-expanded": open,
+          "aria-haspopup": "menu",
+        });
+      })()
     : trigger;
 
   return (
@@ -68,7 +77,13 @@ export function DropdownMenu({ children, trigger, className }: DropdownMenuProps
         >
           {React.Children.map(children, (child) => {
             if (React.isValidElement(child)) {
-              return React.cloneElement(child as React.ReactElement, {
+              // Type for menu item children that can accept onAction
+              type MenuItemChild = React.ReactElement<{
+                onAction?: () => void;
+                [key: string]: unknown;
+              }>;
+              const menuItemChild = child as MenuItemChild;
+              return React.cloneElement(menuItemChild, {
                 onAction: () => {
                   setOpen(false);
                 },
