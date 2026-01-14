@@ -123,3 +123,56 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Sonner toaster container - span full viewport and center */
+[data-sonner-toaster] {
+  position: fixed;
+  width: 100vw;
+  left: 0;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 9999;
+}
+
+/* Sonner toast type-specific styling */
+[data-sonner-toast][data-type="success"] {
+  @apply border-l-4 border-l-green-500;
+}
+
+[data-sonner-toast][data-type="error"] {
+  @apply border-l-4 border-l-red-500;
+}
+
+[data-sonner-toast][data-type="loading"] {
+  @apply border-l-4 border-l-zinc-400;
+}
+
+/* Sonner toast spacing refinements */
+[data-sonner-toast] {
+  /* Position close button absolutely to remove from layout flow */
+  button[data-close-button],
+  [data-close-button] {
+    position: absolute !important;
+    right: 0.5rem !important;
+    top: 0.5rem !important;
+    margin-left: 0 !important;
+    opacity: 0.5;
+    transition: opacity 0.2s;
+  }
+  
+  button[data-close-button]:hover,
+  [data-close-button]:hover {
+    opacity: 1;
+  }
+  
+  /* Ensure text container has padding for close button but doesn't reserve extra width */
+  [data-content] {
+    @apply pr-6;
+  }
+  
+  /* Reduce gap in flex container */
+  > div {
+    @apply gap-2;
+  }
+}

@@ -5,6 +5,7 @@ import { NotesGrid } from "./notes-grid";
 import { NoteViewer } from "./note-viewer";
 import { CreateNoteDialog } from "./create-note-dialog";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 type Note = {
   id: string;
@@ -51,34 +52,49 @@ export function DashboardGridContainer({
 
   async function handleDelete(noteId: string) {
     setIsDeleting(noteId);
+    const toastId = toast.loading("Deleting...");
     try {
       await deleteNoteAction(noteId);
       if (selectedNoteId === noteId) {
         setSelectedNoteId(null);
       }
+      toast.success("Note deleted", { id: toastId });
       router.refresh();
     } catch (error) {
-      alert(error instanceof Error ? error.message : "Failed to delete note");
+      toast.error(
+        error instanceof Error ? error.message : "Failed to delete note",
+        { id: toastId }
+      );
     } finally {
       setIsDeleting(null);
     }
   }
 
   async function handlePin(noteId: string) {
+    const toastId = toast.loading("Pinning...");
     try {
       await pinNoteAction(noteId);
+      toast.success("Note pinned", { id: toastId });
       router.refresh();
     } catch (error) {
-      alert(error instanceof Error ? error.message : "Failed to pin note");
+      toast.error(
+        error instanceof Error ? error.message : "Failed to pin note",
+        { id: toastId }
+      );
     }
   }
 
   async function handleUnpin(noteId: string) {
+    const toastId = toast.loading("Unpinning...");
     try {
       await unpinNoteAction(noteId);
+      toast.success("Note unpinned", { id: toastId });
       router.refresh();
     } catch (error) {
-      alert(error instanceof Error ? error.message : "Failed to unpin note");
+      toast.error(
+        error instanceof Error ? error.message : "Failed to unpin note",
+        { id: toastId }
+      );
     }
   }
 

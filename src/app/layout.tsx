@@ -4,6 +4,7 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { SyncSession } from "@/components/auth/sync-session";
 import { getSiteUrl } from "@/lib/site-url";
+import { Toaster } from "sonner";
 
 // Runtime guard: Warn if NEXT_PUBLIC_SITE_URL is missing in production
 if (process.env.NODE_ENV === "production" && !process.env.NEXT_PUBLIC_SITE_URL) {
@@ -52,11 +53,19 @@ export default function RootLayout({
         />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased w-screen`}
       >
         <ThemeProvider>
           <SyncSession />
           {children}
+          <Toaster
+            position="top-center"
+            richColors={false}
+            closeButton
+            toastOptions={{
+              className: "bg-black/70 backdrop-blur-md border border-white/10 text-white shadow-lg rounded-lg px-2.5 py-2 max-w-md [&>div]:gap-2 relative",
+            }}
+          />
         </ThemeProvider>
       </body>
     </html>
