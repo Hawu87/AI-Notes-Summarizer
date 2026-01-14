@@ -1,7 +1,6 @@
 "use client";
 
-import { useState } from "react";
-import { Plus, FileText, MoreHorizontal, Trash2 } from "lucide-react";
+import { Plus, FileText, MoreHorizontal, Trash2, Pin, PinOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
@@ -11,12 +10,16 @@ type Note = {
   title: string;
   created_at: string;
   created_at_formatted: string;
+  pinned?: boolean;
+  pinned_at?: string | null;
 };
 
 interface NotesGridProps {
   notes: Note[];
   onNoteSelect: (noteId: string) => void;
   onNoteDelete: (noteId: string) => void;
+  onNotePin: (noteId: string) => void;
+  onNoteUnpin: (noteId: string) => void;
   onCreateNote: () => void;
 }
 
@@ -29,13 +32,27 @@ export function NotesGrid({
   notes,
   onNoteSelect,
   onNoteDelete,
+  onNotePin,
+  onNoteUnpin,
   onCreateNote,
 }: NotesGridProps) {
   const handleDelete = (noteId: string, e?: React.MouseEvent) => {
     e?.stopPropagation();
-    if (confirm("Are you sure you want to delete this note?")) {
+    const note = notes.find((n) => n.id === noteId);
+    const noteTitle = note?.title || "this note";
+    if (confirm(`Delete "${noteTitle}"? This can't be undone.`)) {
       onNoteDelete(noteId);
     }
+  };
+
+  const handlePin = (noteId: string, e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    onNotePin(noteId);
+  };
+
+  const handleUnpin = (noteId: string, e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    onNoteUnpin(noteId);
   };
 
   return (
@@ -70,8 +87,16 @@ export function NotesGrid({
         >
           {/* Top row: Icon and Kebab menu */}
           <div className="mb-3 flex items-start justify-between">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-zinc-100 dark:bg-zinc-800">
-              <FileText className="h-5 w-5 text-zinc-600 dark:text-zinc-400" />
+            <div className="flex items-center gap-2">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-zinc-100 dark:bg-zinc-800">
+                <FileText className="h-5 w-5 text-zinc-600 dark:text-zinc-400" />
+              </div>
+              {note.pinned && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-zinc-200 px-2 py-0.5 text-xs font-medium text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
+                  <Pin className="h-3 w-3" />
+                  Pinned
+                </span>
+              )}
             </div>
             <DropdownMenu
               trigger={
@@ -80,6 +105,7 @@ export function NotesGrid({
                   size="icon"
                   className="h-8 w-8 text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200"
                   onClick={(e) => e.stopPropagation()}
+                  aria-haspopup="menu"
                 >
                   <MoreHorizontal className="h-4 w-4" />
                 </Button>
@@ -93,6 +119,25 @@ export function NotesGrid({
               >
                 Open
               </DropdownMenuItem>
+              {note.pinned ? (
+                <DropdownMenuItem
+                  onClick={(e) => handleUnpin(note.id, e)}
+                >
+                  <div className="flex items-center gap-2">
+                    <PinOff className="h-4 w-4" />
+                    <span>Unpin note</span>
+                  </div>
+                </DropdownMenuItem>
+              ) : (
+                <DropdownMenuItem
+                  onClick={(e) => handlePin(note.id, e)}
+                >
+                  <div className="flex items-center gap-2">
+                    <Pin className="h-4 w-4" />
+                    <span>Pin note</span>
+                  </div>
+                </DropdownMenuItem>
+              )}
               <DropdownMenuItem
                 onClick={(e) => handleDelete(note.id, e)}
                 className="text-red-400 hover:bg-red-950/20 hover:text-red-300"

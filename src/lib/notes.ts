@@ -9,6 +9,8 @@ export type Note = {
   title: string;
   content: string;
   created_at: string;
+  pinned?: boolean;
+  pinned_at?: string | null;
 };
 
 /**
@@ -73,9 +75,12 @@ export async function getNotesByUser(): Promise<Note[]> {
   }
 
   // RLS will automatically filter to only the user's notes
+  // Sort by: pinned DESC, pinned_at DESC (nulls last), created_at DESC
   const { data, error } = await supabase
     .from("notes")
     .select("*")
+    .order("pinned", { ascending: false })
+    .order("pinned_at", { ascending: false, nullsFirst: false })
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -110,6 +115,74 @@ export async function deleteNote(noteId: string): Promise<void> {
 
   if (error) {
     throw new Error(`Failed to delete note: ${error.message}`);
+  }
+}
+
+/**
+ * Pins a note (sets pinned=true and pinned_at=now())
+ * RLS ensures users can only pin their own notes
+ * 
+ * @param noteId - The note ID to pin
+ * @throws Error if the database operation fails or user is not authenticated
+ */
+export async function pinNote(noteId: string): Promise<void> {
+  const supabase = await createServerClient();
+  
+  // Get the authenticated user
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+
+  if (userError || !user) {
+    throw new Error("User not authenticated");
+  }
+
+  // RLS will automatically enforce that only the owner can update
+  const { error } = await supabase
+    .from("notes")
+    .update({ 
+      pinned: true,
+      pinned_at: new Date().toISOString()
+    })
+    .eq("id", noteId);
+
+  if (error) {
+    throw new Error(`Failed to pin note: ${error.message}`);
+  }
+}
+
+/**
+ * Unpins a note (sets pinned=false and pinned_at=null)
+ * RLS ensures users can only unpin their own notes
+ * 
+ * @param noteId - The note ID to unpin
+ * @throws Error if the database operation fails or user is not authenticated
+ */
+export async function unpinNote(noteId: string): Promise<void> {
+  const supabase = await createServerClient();
+  
+  // Get the authenticated user
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+
+  if (userError || !user) {
+    throw new Error("User not authenticated");
+  }
+
+  // RLS will automatically enforce that only the owner can update
+  const { error } = await supabase
+    .from("notes")
+    .update({ 
+      pinned: false,
+      pinned_at: null
+    })
+    .eq("id", noteId);
+
+  if (error) {
+    throw new Error(`Failed to unpin note: ${error.message}`);
   }
 }
 

@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { getNotesByUser, createNote, deleteNote } from "@/lib/notes";
+import { getNotesByUser, createNote, deleteNote, pinNote, unpinNote } from "@/lib/notes";
 import { getServerUser } from "@/lib/supabase/server";
 import { DashboardHeader } from "@/components/notes/dashboard-header";
 import { DashboardGridContainer } from "@/components/notes/dashboard-grid-container";
@@ -59,6 +59,38 @@ async function deleteNoteAction(noteId: string) {
 }
 
 /**
+ * Server Action: Pins a note and revalidates the dashboard
+ */
+async function pinNoteAction(noteId: string) {
+  "use server";
+  
+  try {
+    await pinNote(noteId);
+    revalidatePath("/dashboard");
+  } catch (error) {
+    throw new Error(
+      error instanceof Error ? error.message : "Failed to pin note"
+    );
+  }
+}
+
+/**
+ * Server Action: Unpins a note and revalidates the dashboard
+ */
+async function unpinNoteAction(noteId: string) {
+  "use server";
+  
+  try {
+    await unpinNote(noteId);
+    revalidatePath("/dashboard");
+  } catch (error) {
+    throw new Error(
+      error instanceof Error ? error.message : "Failed to unpin note"
+    );
+  }
+}
+
+/**
  * Dashboard page - displays all notes for the authenticated user
  * 
  * This is a Server Component that fetches notes from Supabase.
@@ -93,6 +125,8 @@ export default async function DashboardPage() {
             notes={notesWithFormattedDates}
             createNoteAction={createNoteAction}
             deleteNoteAction={deleteNoteAction}
+            pinNoteAction={pinNoteAction}
+            unpinNoteAction={unpinNoteAction}
           />
         </div>
       </div>

@@ -12,6 +12,8 @@ type Note = {
   content: string;
   created_at: string;
   created_at_formatted: string;
+  pinned?: boolean;
+  pinned_at?: string | null;
 };
 
 type CreateNoteAction = (formData: FormData) => Promise<{ error?: string; success?: boolean }>;
@@ -20,6 +22,8 @@ interface DashboardGridContainerProps {
   notes: Note[];
   createNoteAction: CreateNoteAction;
   deleteNoteAction: (noteId: string) => Promise<void>;
+  pinNoteAction: (noteId: string) => Promise<void>;
+  unpinNoteAction: (noteId: string) => Promise<void>;
 }
 
 /**
@@ -32,6 +36,8 @@ export function DashboardGridContainer({
   notes,
   createNoteAction,
   deleteNoteAction,
+  pinNoteAction,
+  unpinNoteAction,
 }: DashboardGridContainerProps) {
   const router = useRouter();
   const [selectedNoteId, setSelectedNoteId] = useState<string | null>(null);
@@ -55,6 +61,24 @@ export function DashboardGridContainer({
       alert(error instanceof Error ? error.message : "Failed to delete note");
     } finally {
       setIsDeleting(null);
+    }
+  }
+
+  async function handlePin(noteId: string) {
+    try {
+      await pinNoteAction(noteId);
+      router.refresh();
+    } catch (error) {
+      alert(error instanceof Error ? error.message : "Failed to pin note");
+    }
+  }
+
+  async function handleUnpin(noteId: string) {
+    try {
+      await unpinNoteAction(noteId);
+      router.refresh();
+    } catch (error) {
+      alert(error instanceof Error ? error.message : "Failed to unpin note");
     }
   }
 
@@ -82,6 +106,8 @@ export function DashboardGridContainer({
         notes={notes}
         onNoteSelect={setSelectedNoteId}
         onNoteDelete={handleDelete}
+        onNotePin={handlePin}
+        onNoteUnpin={handleUnpin}
         onCreateNote={() => setShowCreateDialog(true)}
       />
       <CreateNoteDialog
